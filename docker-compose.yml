@@ -57,7 +57,7 @@ services:
       sh -c "pip install --no-cache-dir fastapi uvicorn[standard] httpx &&
              python proxy.py"
     ports:
-      - 95:8080
+      - 8080:8080
     depends_on:
       - litellm
 
