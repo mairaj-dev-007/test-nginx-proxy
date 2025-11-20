@@ -1,0 +1,66 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:alpine
+    command:
+      - redis-server
+      - --save
+      - "60"
+      - "1"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  litellm:
+    image: ghcr.io/berriai/litellm-database:main-stable
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres:5432/$POSTGRES_DB
+      REDIS_URL: redis://redis:6379
+      LITELLM_LOG: WARNING
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    ports:
+      - 4000:4000
+    restart: on-failure
+
+  python-proxy:
+    image: python:3.12-slim
+    container_name: python-proxy
+    working_dir: /app
+    volumes:
+      - ./proxy:/app
+    environment:
+      TARGET_URL: "http://litellm:4000"
+      ALLOWED_IPS: ""  # Optional: comma-separated list of allowed IPs
+    command: >
+      sh -c "pip install --no-cache-dir fastapi uvicorn[standard] httpx &&
+             python proxy.py"
+    ports:
+      - 95:8080
+    depends_on:
+      - litellm
+
+volumes:
+  postgres_data: null
+  redis_data: null
