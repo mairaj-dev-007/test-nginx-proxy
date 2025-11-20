@@ -63,6 +63,24 @@ services:
     depends_on:
       - litellm
 
+  node-proxy:
+    image: node:20-alpine
+    container_name: node-proxy
+    working_dir: /app
+    volumes:
+      - ./node-proxy:/app
+    environment:
+      UPSTREAM_SERVERS: '${UPSTREAM_SERVERS:-{"litellm": "http://litellm:4000"}}'
+      SERVER_CONFIG: '${SERVER_CONFIG:-{}}'
+      DEFAULT_UPSTREAM: '${DEFAULT_UPSTREAM:-litellm}'
+      PORT: '8080'
+    command: >
+      sh -c "npm install && npm start"
+    ports:
+      - 3005:8080
+    depends_on:
+      - litellm
+
 volumes:
   postgres_data: null
   redis_data: null
