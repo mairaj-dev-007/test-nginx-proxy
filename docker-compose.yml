@@ -56,7 +56,7 @@ services:
       DEFAULT_UPSTREAM: '${DEFAULT_UPSTREAM:-litellm}'
     command: >
       sh -c "pip install --no-cache-dir fastapi uvicorn[standard] httpx &&
-             uvicorn proxy:app --host 0.0.0.0 --port 8080"
+             uvicorn app:app --host 0.0.0.0 --port 8080"
 
     ports:
       - 3004:8080
