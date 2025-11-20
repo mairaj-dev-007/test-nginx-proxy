@@ -51,8 +51,9 @@ services:
     volumes:
       - ./proxy:/app
     environment:
-      TARGET_URL: "http://litellm:4000"
-      ALLOWED_IPS: ""  # Optional: comma-separated list of allowed IPs
+      UPSTREAM_SERVERS: '${UPSTREAM_SERVERS:-{"litellm": "http://litellm:4000"}}'
+      SERVER_CONFIG: '${SERVER_CONFIG:-{}}'
+      DEFAULT_UPSTREAM: '${DEFAULT_UPSTREAM:-litellm}'
     command: >
       sh -c "pip install --no-cache-dir fastapi uvicorn[standard] httpx &&
              uvicorn proxy:app --host 0.0.0.0 --port 8080"
